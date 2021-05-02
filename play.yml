@@ -1,0 +1,13 @@
+- hosts: localhost
+  vars_files:
+    - secure.yml
+  roles:
+    - ec2
+
+- hosts: tag_Name_masterNode
+  roles:
+    - kubemasternode
+
+- hosts: tag_Name_slaveNode
+  roles:
+    - kubeslavenode

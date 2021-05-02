@@ -1,0 +1,107 @@
+---
+# tasks file for kubeslavenode
+
+- debug:
+    msg: "Slave Node Configuration"
+
+- name: "Installing docker"
+  package:
+    name: "docker"
+    state: present
+
+- name: "Starting and enabling docker service permanently"
+  service:
+    name: "docker"
+    state: started
+    enabled: yes
+
+- name: "configuring yum repo for kubeadm"
+  yum_repository:
+    name: "K8s-repo"
+    description: "Repository for K8s"
+    baseurl: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
+    gpgcheck: yes
+    repo_gpgcheck: yes
+    description: Kubernetes
+    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    enabled: yes
+
+- name: "Installing kubeadm, kubectl and kubelet"
+  package:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+
+- name: "Starting and enabling kubelet service"
+  service:
+    name: "kubelet"
+    state: started
+    enabled: yes
+  ignore_errors: True
+
+- name: "Pulling required docker images for kubernetes"
+  command: "kubeadm config images pull"
+
+- name: "Changing the driver of docker from cgroupfs to systemd"
+  copy:
+    dest: "/etc/docker/daemon.json"
+    content: '{
+              "exec-opts": ["native.cgroupdriver=systemd"]
+              }'
+
+- name: "Restarting docker service"
+  service:
+    name: "docker"
+    state: restarted
+
+- name: "Installing iproute-tc software"
+  package:
+    name: "iproute-tc"
+    state: present
+
+- name: appending systcl file
+  shell: "cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf \n net.bridge.bridge-nf-call-ip6tables = 1 \n net.bridge.bridge-nf-call-iptables = 1"
+
+- name: "Starting sysctl service"
+  command: "sudo sysctl --system"
+
+- name: Copy the join command to server location
+  copy: 
+    src: /kubeMutiClusterOnAwsRole/joincmd.txt 
+    dest: /kubeMutiClusterOnAwsRole/joincmd.sh
+    mode: +x 
+
+- name: join command
+  shell: "sh /kubeMutiClusterOnAwsRole/joincmd.sh"
+
+
+- debug:
+        msg: "Both Master and slave Nodes are successfully configured... Now, you can lauch the deployment and use it"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

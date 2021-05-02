@@ -1,0 +1,1 @@
+kubeadm join 172.31.45.158:6443 --token gbm2x2.y429ubjzxnroh9qa --discovery-token-ca-cert-hash sha256:2cb463bd9faac47473b009a1812c64b9c267cdb5f3658dae27bac60fded916dc 

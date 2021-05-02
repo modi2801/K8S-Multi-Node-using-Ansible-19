@@ -1,0 +1,37 @@
+- hosts: localhost
+  vars_files:
+    - secure.yml
+  tasks: 
+  - name: "Launching Load Balancer Instance in AWS using Ansible"
+    ec2:
+      key_name: "mynewawskey"
+      instance_tags:
+        Name: LB
+      instance_type: "t2.micro"
+      image: "ami-045e6fa7127ab1ac4"
+      wait: yes
+      count: 1
+      vpc_subnet_id: "subnet-d7caf0bf"
+      assign_public_ip: yes
+      region: "ap-south-1"
+      state: present
+      group_id: "sg-9389ccf1"
+      aws_access_key: "{{my_user}}"
+      aws_secret_key: "{{my_pass}}"
+  - name: "Launching Load Balancer Instance in AWS using Ansible"
+    ec2:
+      key_name: "mynewawskey"
+      instance_tags:
+        Name: webserver
+      instance_type: "t2.micro"
+      image: "ami-045e6fa7127ab1ac4"
+      wait: yes
+      count: 2
+      vpc_subnet_id: "subnet-d7caf0bf"
+      assign_public_ip: yes
+      region: "ap-south-1"
+      state: present
+      group_id: "sg-9389ccf1"
+      aws_access_key: "{{my_user}}"
+      aws_secret_key: "{{my_pass}}"
+

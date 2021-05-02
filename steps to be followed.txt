@@ -1,0 +1,74 @@
+[MASTER NODE]
+
+sudo su - root
+yum install docker -y
+systemctl enable docker --now
+vi /etc/yum.repos.d/kubernetes.repo
+	[kubernetes]
+	name=Kubernetes
+	baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+	enabled=1
+	gpgcheck=1
+	repo_gpgcheck=1
+	gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+	exclude=kubelet kubeadm kubectl
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+systemctl enable --now kubelet
+kubeadm config images pull
+vi /etc/docker/daemon.json
+	{
+	  "exec-opts": ["native.cgroupdriver=systemd"]
+	}
+systemctl restart docker
+yum install iproute-tc -y
+kubeadm init --pod-network-cidr=10.24.0.0/16 --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+kubectl get pods
+kubectl get nodes
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+kubeadm token create --print-join-command     {{Save it's output in a variable}}
+
+
+
+[SLAVE NODE]
+
+sudo su - root
+yum install docker -y
+systemctl enable docker --now
+vi /etc/yum.repos.d/kubernetes.repo
+	[kubernetes]
+	name=Kubernetes
+	baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+	enabled=1
+	gpgcheck=1
+	repo_gpgcheck=1
+	gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+	exclude=kubelet kubeadm kubectl
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+systemctl enable --now kubelet
+kubeadm config images pull ...   {{Check whether this command is used or not}}
+vi /etc/docker/daemon.json
+	{
+	  "exec-opts": ["native.cgroupdriver=systemd"]
+	}
+systemctl restart docker
+yum install iproute-tc -y 
+vi /etc/sysctl.d/k8s.conf
+	net.bridge.bridge-nf-call-ip6tables=1
+	net.bridge.bridge-nf-call-iptables=1
+sysctl --system
+kubeadm join ..... <Given as output of kubeadm token create --print-join-command from master node>
+
+[AGAIN IN MASTER]
+
+kubectl create deployment myd --image=vimal13/apache-webserver-php
+kubectl expose deploy myd --port=80 --type=NodePort
+
+kubectl scale deployment myd --replicas=5
+kubectl get pods -o wide
+
+
+Connect with the help of ip of master using the port number given by expose from the browser.....
